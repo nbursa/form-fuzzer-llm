@@ -16,5 +16,9 @@
     "automation"
   ],
   "author": "Nenad Bursac",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "serve": "^14.2.4"
+  }
 }
