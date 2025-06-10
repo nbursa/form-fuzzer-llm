@@ -1,0 +1,20 @@
+{
+  "name": "form-fuzzer",
+  "version": "0.1.0",
+  "description": "Generate realistic test data from HTML forms",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "form",
+    "fuzz",
+    "testing",
+    "html",
+    "automation"
+  ],
+  "author": "Nenad Bursac",
+  "license": "MIT"
+}
