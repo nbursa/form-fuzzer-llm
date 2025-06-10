@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>form-fuzzer test</title>
+  </head>
+  <body>
+    <form id="test-form">
+      <input name="email" type="email" />
+      <input name="age" type="number" />
+      <input name="username" placeholder="user123" />
+      <select name="role">
+        <option value="admin">Admin</option>
+        <option value="user">User</option>
+      </select>
+      <textarea name="bio"></textarea>
+    </form>
+
+    <button onclick="runFuzzer()">Generate</button>
+
+    <script type="module">
+      import { generateTestData } from "./dist/index.js";
+
+      window.runFuzzer = () => {
+        const form = document.getElementById("test-form");
+        const data = generateTestData(form);
+        console.log(data);
+        alert(JSON.stringify(data, null, 2));
+      };
+    </script>
+  </body>
+</html>
