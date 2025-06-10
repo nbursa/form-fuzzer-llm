@@ -1,40 +1,70 @@
-export function generateTestData(
+import { getLlama, LlamaChatSession } from "node-llama-cpp";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const llama = await getLlama();
+const model = await llama.loadModel({
+  modelPath: path.join(__dirname, "../models/formfuzz.gguf"),
+});
+const context = await model.createContext();
+const session = new LlamaChatSession({
+  contextSequence: context.getSequence(),
+});
+
+interface FieldMeta {
+  name: string;
+  type: string;
+  placeholder?: string;
+}
+
+function extractFieldMeta(form: HTMLFormElement): FieldMeta[] {
+  return Array.from(
+    form.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >("input[name], select[name], textarea[name]")
+  )
+    .filter((el) => !!el.name)
+    .map((el) => ({
+      name: el.name,
+      type:
+        el instanceof HTMLInputElement
+          ? el.type
+          : el instanceof HTMLSelectElement
+          ? "select"
+          : "textarea",
+      placeholder:
+        el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
+          ? el.placeholder || ""
+          : undefined,
+    }));
+}
+
+export async function generateTestData(
   form: HTMLFormElement
-): Record<string, string> {
-  const fields: Record<string, string> = {};
+): Promise<Record<string, string>> {
+  const fields = extractFieldMeta(form);
+  const prompt = JSON.stringify(fields);
+  const reply = await session.prompt(prompt);
 
-  const inputs = form.querySelectorAll<
-    HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-  >("input[name], select[name], textarea[name]");
-
-  inputs.forEach((el) => {
-    const name = el.name;
-    if (!name) return;
-
-    let value = "";
-
-    if (el instanceof HTMLInputElement) {
-      switch (el.type) {
+  try {
+    return JSON.parse(reply);
+  } catch {
+    // fallback if parsing fails
+    const result: Record<string, string> = {};
+    fields.forEach((f) => {
+      switch (f.type) {
         case "email":
-          value = "test@example.com";
+          result[f.name] = "test@example.com";
           break;
         case "number":
-          value = String(Math.floor(Math.random() * 100));
+          result[f.name] = String(Math.floor(Math.random() * 100));
           break;
-        case "text":
         default:
-          value = el.placeholder || "Lorem Ipsum";
+          result[f.name] = f.placeholder || "Lorem Ipsum";
           break;
       }
-    } else if (el instanceof HTMLSelectElement) {
-      const options = Array.from(el.options).filter((o) => o.value);
-      value = options[Math.floor(Math.random() * options.length)]?.value || "";
-    } else if (el instanceof HTMLTextAreaElement) {
-      value = "Generated text content.";
-    }
-
-    fields[name] = value;
-  });
-
-  return fields;
+    });
+    return result;
+  }
 }

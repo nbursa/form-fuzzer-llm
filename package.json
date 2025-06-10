@@ -1,7 +1,7 @@
 {
-  "name": "form-fuzzer",
+  "name": "form-fuzzer-llm",
   "version": "0.1.0",
-  "description": "Generate realistic test data from HTML forms",
+  "description": "Generate realistic test data from HTML forms using custom LLM",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -18,8 +18,12 @@
   "author": "Nenad Bursac",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "jsdom": "^26.1.0",
     "serve": "^14.2.4",
     "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "node-llama-cpp": "3"
   }
 }
