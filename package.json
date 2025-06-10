@@ -19,6 +19,7 @@
   "license": "MIT",
   "devDependencies": {
     "jsdom": "^26.1.0",
-    "serve": "^14.2.4"
+    "serve": "^14.2.4",
+    "vitest": "^3.2.3"
   }
 }
