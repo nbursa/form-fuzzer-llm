@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>form-fuzzer test</title>
+    <title>form-fuzzer demo</title>
   </head>
   <body>
     <form id="test-form">
@@ -16,17 +16,30 @@
       <textarea name="bio"></textarea>
     </form>
 
-    <button onclick="runFuzzer()">Generate</button>
+    <button id="generate-btn">Generate</button>
 
-    <script type="module">
-      import { generateTestData } from "./dist/index.js";
+    <script>
+      document
+        .getElementById("generate-btn")
+        .addEventListener("click", async () => {
+          const form = document.getElementById("test-form");
+          const html = form.outerHTML;
 
-      window.runFuzzer = () => {
-        const form = document.getElementById("test-form");
-        const data = generateTestData(form);
-        console.log(data);
-        alert(JSON.stringify(data, null, 2));
-      };
+          const resp = await fetch("/api/fuzz", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ html }),
+          });
+
+          if (!resp.ok) {
+            alert("Error: " + resp.statusText);
+            return;
+          }
+
+          const data = await resp.json();
+          console.log("data:", data);
+          alert(JSON.stringify(data, null, 2));
+        });
     </script>
   </body>
 </html>

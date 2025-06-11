@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "form-fuzzer-llm",
   "version": "0.1.1",
   "description": "Generate realistic test data from HTML forms using custom LLM",
@@ -6,7 +7,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
+    "dev": "ts-node src/server.ts",
+    "start": "pnpm build && node dist/server.js",
     "postinstall": "node scripts/download-model.js"
   },
   "keywords": [
@@ -19,12 +21,16 @@
   "author": "Nenad Bursac",
   "license": "MIT",
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^24.0.0",
     "jsdom": "^26.1.0",
     "serve": "^14.2.4",
+    "ts-node-esm": "^0.0.6",
     "vitest": "^3.2.3"
   },
   "dependencies": {
+    "express": "^5.1.0",
     "node-llama-cpp": "3"
   }
 }
