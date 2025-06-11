@@ -2,6 +2,12 @@ import { getLlama, LlamaChatSession } from "node-llama-cpp";
 import { fileURLToPath } from "url";
 import path from "path";
 
+export interface FieldMeta {
+  name: string;
+  type: string;
+  placeholder?: string;
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const llama = await getLlama();
 const model = await llama.loadModel({
@@ -12,59 +18,39 @@ const session = new LlamaChatSession({
   contextSequence: context.getSequence(),
 });
 
-interface FieldMeta {
-  name: string;
-  type: string;
-  placeholder?: string;
-}
-
-function extractFieldMeta(form: HTMLFormElement): FieldMeta[] {
-  return Array.from(
-    form.querySelectorAll<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >("input[name], select[name], textarea[name]")
-  )
-    .filter((el) => !!el.name)
-    .map((el) => ({
-      name: el.name,
-      type:
-        el instanceof HTMLInputElement
-          ? el.type
-          : el instanceof HTMLSelectElement
-          ? "select"
-          : "textarea",
-      placeholder:
-        el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
-          ? el.placeholder || ""
-          : undefined,
-    }));
-}
-
-export async function generateTestData(
-  form: HTMLFormElement
+export async function fuzzWithLLM(
+  fields: FieldMeta[]
 ): Promise<Record<string, string>> {
-  const fields = extractFieldMeta(form);
-  const prompt = JSON.stringify(fields);
-  const reply = await session.prompt(prompt);
+  const prompt = `Return ONLY a single JSON object mapping these form fields to string values:\n${JSON.stringify(
+    fields
+  )}`;
+
+  const raw = await session.prompt(prompt, {
+    maxTokens: 512,
+    temperature: 0.1,
+  });
+
+  console.log("LLM raw reply:", raw);
+
+  const cleaned = raw.replace(/<\|.*?\|>/g, "").trim();
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start < 0 || end < 0 || end <= start) {
+    throw new Error("Could not extract JSON from LLM reply:\n" + cleaned);
+  }
+
+  const jsonText = cleaned.slice(start, end + 1);
 
   try {
-    return JSON.parse(reply);
-  } catch {
-    // fallback if parsing fails
-    const result: Record<string, string> = {};
-    fields.forEach((f) => {
-      switch (f.type) {
-        case "email":
-          result[f.name] = "test@example.com";
-          break;
-        case "number":
-          result[f.name] = String(Math.floor(Math.random() * 100));
-          break;
-        default:
-          result[f.name] = f.placeholder || "Lorem Ipsum";
-          break;
-      }
-    });
-    return result;
+    const parsed = JSON.parse(jsonText);
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) throw new Error("LLM returned empty array");
+      return parsed[0];
+    }
+    return parsed;
+  } catch (err) {
+    console.error("Failed to parse JSON:", jsonText);
+    throw err;
   }
 }
