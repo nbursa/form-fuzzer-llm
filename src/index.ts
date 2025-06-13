@@ -11,9 +11,9 @@ export interface FieldMeta {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const llama = await getLlama();
 const model = await llama.loadModel({
-  modelPath: path.join(__dirname, "../models/formfuzz.gguf"),
+  modelPath: path.join(__dirname, "../models/formfuzzer-tiny.gguf"),
 });
-const context = await model.createContext();
+const context = await model.createContext({ nCtx: 128 });
 const session = new LlamaChatSession({
   contextSequence: context.getSequence(),
 });
@@ -53,4 +53,34 @@ export async function fuzzWithLLM(
     console.error("Failed to parse JSON:", jsonText);
     throw err;
   }
+}
+
+export async function fuzz(
+  fields: FieldMeta[]
+): Promise<Record<string, string>> {
+  try {
+    return await fuzzWithLLM(fields);
+  } catch (err) {
+    console.warn("LLM failed, falling back to static generator:", err);
+    return fallbackFuzz(fields);
+  }
+}
+
+function fallbackFuzz(fields: FieldMeta[]): Record<string, string> {
+  const mock: Record<string, string> = {};
+  for (const field of fields) {
+    mock[field.name] = generateFakeValue(field.type, field.placeholder);
+  }
+  return mock;
+}
+
+function generateFakeValue(type: string, hint?: string): string {
+  if (/email/i.test(type)) return "john.doe@example.com";
+  if (/name/i.test(type)) return "John Doe";
+  if (/phone|tel/i.test(type)) return "+1-555-1234";
+  if (/date/i.test(type)) return "2025-01-01";
+  if (/city/i.test(type)) return "New York";
+  if (/zip|post/i.test(type)) return "12345";
+  if (/bio|desc/i.test(type)) return "This is a short bio.";
+  return "Lorem Ipsum";
 }

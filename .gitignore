@@ -22,4 +22,5 @@ Thumbs.db
 coverage/
 
 # model files
-*.gguf
+# *.gguf
+tiny/*

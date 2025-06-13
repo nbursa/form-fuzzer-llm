@@ -1,8 +1,9 @@
-import express, { RequestHandler } from "express";
+import express from "express";
+import type { RequestHandler } from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { JSDOM } from "jsdom";
-import { FieldMeta, fuzzWithLLM } from "./index.js";
+import { FieldMeta, fuzz } from "./index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -39,7 +40,7 @@ const fuzzHandler: RequestHandler = async (req, res) => {
   }));
 
   try {
-    const data = await fuzzWithLLM(fields);
+    const data = await fuzz(fields);
     res.json(data);
     return;
   } catch (err) {

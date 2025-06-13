@@ -3,20 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <title>form-fuzzer demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        max-width: 400px;
+      }
+      input,
+      select,
+      textarea,
+      button {
+        font-size: 1rem;
+        padding: 0.5rem;
+      }
+    </style>
   </head>
   <body>
+    <h1>🧪 form-fuzzer-ai demo</h1>
+
     <form id="test-form">
-      <input name="email" type="email" />
-      <input name="age" type="number" />
+      <input name="email" type="email" placeholder="you@example.com" />
+      <input name="age" type="number" placeholder="30" />
       <input name="username" placeholder="user123" />
       <select name="role">
+        <option value="">Choose role</option>
         <option value="admin">Admin</option>
         <option value="user">User</option>
       </select>
-      <textarea name="bio"></textarea>
+      <textarea name="bio" placeholder="About you..."></textarea>
     </form>
 
-    <button id="generate-btn">Generate</button>
+    <button id="generate-btn">Generate & Fill</button>
 
     <script>
       document
@@ -38,7 +60,14 @@
 
           const data = await resp.json();
           console.log("data:", data);
-          alert(JSON.stringify(data, null, 2));
+
+          // Apply values to form
+          for (const [name, value] of Object.entries(data)) {
+            const el = form.querySelector(`[name="${name}"]`);
+            if (el) el.value = value;
+          }
+
+          alert("Generated:\n" + JSON.stringify(data, null, 2));
         });
     </script>
   </body>
