@@ -13,7 +13,7 @@ const llama = await getLlama();
 const model = await llama.loadModel({
   modelPath: path.join(__dirname, "../models/formfuzzer-tiny.gguf"),
 });
-const context = await model.createContext({ nCtx: 128 });
+const context = await model.createContext();
 const session = new LlamaChatSession({
   contextSequence: context.getSequence(),
 });
@@ -21,18 +21,34 @@ const session = new LlamaChatSession({
 export async function fuzzWithLLM(
   fields: FieldMeta[]
 ): Promise<Record<string, string>> {
-  const prompt = `Return ONLY a single JSON object mapping these form fields to string values:\n${JSON.stringify(
-    fields
-  )}`;
+  const prompt = `
+    Given the following fields, return a single valid JSON object.
+    Respond ONLY with the JSON object. No explanation.
+
+    Fields:
+    [{"name":"email","type":"email"},{"name":"age","type":"number"},{"name":"username","type":"text"},{"name":"role","type":"select"},{"name":"bio","type":"textarea"}]
+
+    Output:
+    {"email":"jane.doe@example.com","age":"27","username":"janedoe","role":"editor","bio":"Frontend engineer based in Berlin."}
+
+    Fields:
+    ${JSON.stringify(fields)}
+
+    Output:
+  `;
 
   const raw = await session.prompt(prompt, {
     maxTokens: 512,
     temperature: 0.1,
   });
-
   console.log("LLM raw reply:", raw);
 
-  const cleaned = raw.replace(/<\|.*?\|>/g, "").trim();
+  const cleaned = raw
+    .replace(/<\|.*?\|>/g, "")
+    .trim()
+    .replace(/\n/g, "")
+    .replace(/[\r\t]/g, "")
+    .replace(/}{/g, "},{");
 
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
