@@ -19,28 +19,27 @@ const session = new LlamaChatSession({
 });
 
 export async function fuzzWithLLM(
-  fields: FieldMeta[]
+  fields: FieldMeta[],
 ): Promise<Record<string, string>> {
   const prompt = `
-    Given the following fields, return a single valid JSON object.
-    Respond ONLY with the JSON object. No explanation.
+[{"name":"email","type":"email"},{"name":"age","type":"number"}]
+{"email":"jane.doe@example.com","age":"27"}
 
-    Fields:
-    [{"name":"email","type":"email"},{"name":"age","type":"number"},{"name":"username","type":"text"},{"name":"role","type":"select"},{"name":"bio","type":"textarea"}]
+[{"name":"name","type":"text"},{"name":"zip","type":"text"},{"name":"role","type":"select"}]
+{"name":"Veronica Yu","zip":"21554","role":"admin"}
 
-    Output:
-    {"email":"jane.doe@example.com","age":"27","username":"janedoe","role":"editor","bio":"Frontend engineer based in Berlin."}
+[{"name":"phone","type":"tel"},{"name":"username","type":"text"}]
+{"phone":"914-927-5416","username":"cbrewer"}
 
-    Fields:
-    ${JSON.stringify(fields)}
-
-    Output:
-  `;
+${JSON.stringify(fields)}
+Output:
+`;
 
   const raw = await session.prompt(prompt, {
-    maxTokens: 512,
-    temperature: 0.1,
+    maxTokens: 256,
+    temperature: 0.2,
   });
+
   console.log("LLM raw reply:", raw);
 
   const cleaned = raw
@@ -72,7 +71,7 @@ export async function fuzzWithLLM(
 }
 
 export async function fuzz(
-  fields: FieldMeta[]
+  fields: FieldMeta[],
 ): Promise<Record<string, string>> {
   try {
     return await fuzzWithLLM(fields);
